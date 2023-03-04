@@ -8,3 +8,5 @@
     - e.g. if I replace with `mov rdi, 1` , exit code is 1
 - 13. What is the first argument of the `exit` system call?
   - ditto
+
+  pd
