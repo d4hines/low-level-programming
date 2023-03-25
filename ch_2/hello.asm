@@ -195,23 +195,53 @@ print_int:
         call print_uint
     ret
 
+read_char:
+    ; Save the registers that might be changed by the syscall
+    push rax
+    push rdi
+    push rsi
+    push rdx
+
+    ; Allocate space on the stack for the buffer
+    sub rsp, 1
+
+    ; Prepare the syscall arguments
+    mov rax, 0 ; The syscall number for 'read' is 0
+    mov rdi, 0 ; File descriptor 0 is stdin
+    mov rsi, rsp ; RSI points to the buffer on the stack
+    mov rdx, 1 ; Read 1 byte (1 character)
+
+    ; Invoke the syscall
+    syscall
+
+    ; Check if the end of input stream has occurred (read syscall returns 0)
+    cmp rax, 0
+    je .end_of_input
+
+    ; Load the read character into RAX
+    movzx rax, byte [rsp]
+    jmp .return
+
+    .end_of_input:
+        xor rax, rax ; Set RAX to 0
+
+    .return:
+        ; Deallocate the buffer space on the stack
+        add rsp, 1
+
+        ; Restore the saved registers
+        pop rdx
+        pop rsi
+        pop rdi
+        pop rax
+
+        ret
+
 _start:
-    ; WORKS!
-    ; mov rdi, '99'
-    ; call print_char
-    ; call print_newline
+    call read_char
+    mov rdi, rax
+    call print_char
 
-    ; WORKS!
-    ; mov rdi, message
-    ; call print_string
-
-    ; mov rdi, 98
-    ; add rdi, '0'
-    ; call print_char
-
-    mov rdi, -1234     ; Move the signed integer -1234 into RAX
-    call print_int
-    
     call print_newline
 
     call exit
