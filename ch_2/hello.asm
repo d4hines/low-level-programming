@@ -194,10 +194,8 @@ print_int:
         pop rdi
         call print_uint
     ret
-
 read_char:
     ; Save the registers that might be changed by the syscall
-    push rax
     push rdi
     push rsi
     push rdx
@@ -233,7 +231,6 @@ read_char:
         pop rdx
         pop rsi
         pop rdi
-        pop rax
 
         ret
 
