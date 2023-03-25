@@ -1,5 +1,6 @@
 section .data
 message: db "hello world", 0
+ten: dq 10
 
 section .text
 global _start
@@ -12,17 +13,17 @@ exit:
     mov rax, 60
     syscall
 
-print_uint:
-    ; Save used registers
-    push rbx
-    push rcx
-    push rdx
-    push rsi
+; print_uint:
+;     ; Save used registers
+;     push rbx
+;     push rcx
+;     push rdx
+;     push rsi
 
-    ; Prepare the stack to store ASCII digits
-    mov rcx, 10          ; Maximum number of decimal digits in a 32-bit unsigned integer
-    sub rsp, rcx         ; Allocate space on the stack for the ASCII digits
-    lea rbx, [rsp]       ; Set RBX to point to the top of the allocated space
+;     ; Prepare the stack to store ASCII digits
+;     mov rcx, 10          ; Maximum number of decimal digits in a 32-bit unsigned integer
+;     sub rsp, rcx         ; Allocate space on the stack for the ASCII digits
+;     lea rbx, [rsp]       ; Set RBX to point to the top of the allocated space
 
     ; Convert the number to its ASCII representation
 ; .convert_to_ascii:
@@ -106,6 +107,29 @@ print_string:
   pop rbx
   ret
 
+
+print_uint:
+; allocate 20 bytes on the stack - the maximum for a 64-bit uint
+    ; sub rsp, 20
+    ; mov rsi, rsp
+
+    mov rax, rdi
+    .loop:
+        xor rdx, rdx
+        div qword [ten]
+        add dl, '0'
+        ; rax: quotiant
+        ; rdx: remainder 
+        push rax
+
+        mov rdi, rdx
+        call print_char
+
+        pop rax
+        test rax, rax
+        jnz .loop
+        ret
+        
 _start:
     ; WORKS!
     ; mov rdi, '99'
@@ -115,10 +139,14 @@ _start:
     ; WORKS!
     ; mov rdi, message
     ; call print_string
+
+    ; mov rdi, 98
+    ; add rdi, '0'
+    ; call print_char
+
+    mov rdi, 912
+    call print_uint
+    
     call print_newline
 
     call exit
-
-section .data
-    ten dq 10
-
