@@ -107,29 +107,94 @@ print_string:
   pop rbx
   ret
 
+; Function to reverse a string in place
+; Argument: RDI -> pointer to the null-terminated string
+reverse_string:
+    ; example string: 'abc'
+    ; Save the registers we'll modify
+    push rsi
+    push rcx
+    push rdx
+
+    ; Calculate the string length
+    call string_length ; rax now contains the string length
+    ; rax = 3
+
+    ; Reverse the string
+    dec rax ; adjust the length to account for 0-based index
+    ; rax = 2
+    mov rcx, rax ; rcx will store the end index
+    xor rdx, rdx ; rdx will store the start index
+
+    .reverse_loop:
+        cmp rdx, rcx
+        jge .done ; if start index >= end index, the reversal is done
+
+        ; Swap characters at start and end index
+        mov al, byte [rdi + rdx]
+        mov bl, byte [rdi + rcx]
+        mov byte [rdi + rdx], bl
+        mov byte [rdi + rcx], al
+
+        ; Update indices
+        inc rdx
+        dec rcx
+        jmp .reverse_loop
+
+    .done:
+    ; Restore the registers and return
+    pop rdx
+    pop rcx
+    pop rsi
+    ret
 
 print_uint:
-; allocate 20 bytes on the stack - the maximum for a 64-bit uint
-    ; sub rsp, 20
-    ; mov rsi, rsp
+    ; allocate 20 bytes on the stack - the maximum for a 64-bit uint
+    ; let's pretend rsp = 1000
+    sub rsp, 20 
+    ; now rsp = 980
+    mov rsi, rsp
 
     mov rax, rdi
+    mov rcx, 0
     .loop:
         xor rdx, rdx
-        div qword [ten]
-        add dl, '0'
-        ; rax: quotiant
-        ; rdx: remainder 
-        push rax
-
-        mov rdi, rdx
-        call print_char
-
-        pop rax
+        div qword [ten] ; rax = quotiant, rdx = remainder
+        add dl, '0' ; convert to ascii (dl is lower byte of rdx)
+        mov byte [rsp+rcx], dl ; move remainder onto stack
+        ; 980 = 9
+        ; 981 = 1
+        ; 982 =  2
+        inc rcx
         test rax, rax
         jnz .loop
-        ret
-        
+    mov byte [rsp+rcx], 0 ; add null char to terminate the string
+    ; 983 = 4
+    mov rdi, rsp 
+    call reverse_string
+    call print_string
+    add rsp, 20 ; reset stack pointer
+    ret
+
+print_int:
+    mov rax, rdi
+    cqo
+    xor rax, rdx       ; Complement RAX if negative, leave unchanged if positive or zero
+    sub rax, rdx       ; Add 1 if RAX was negative, subtract 0 if positive or zero
+    push rax
+
+    test rdx, rdx      ; Check if RDX is non-zero (which means the original number was negative)
+    jz .positive       ; If RDX is zero, the original number was positive, so jump to .positive
+
+    ; If the original number was negative, print the '-' sign
+    mov rdi, '-'
+    call print_char
+
+    .positive:
+        pop rdi
+        call print_uint
+    ret
+
 _start:
     ; WORKS!
     ; mov rdi, '99'
@@ -144,8 +209,8 @@ _start:
     ; add rdi, '0'
     ; call print_char
 
-    mov rdi, 912
-    call print_uint
+    mov rdi, -1234     ; Move the signed integer -1234 into RAX
+    call print_int
     
     call print_newline
 
